@@ -1,4 +1,5 @@
 const { Usuario } = require('./model');
+const RespostasRepository = require('../resposta/repositorio-sql');
 const { Resposta } = require('../resposta/model');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
@@ -6,7 +7,7 @@ const jwt = require('jsonwebtoken');
 class UsuariosController {
 
     constructor() {
-        
+        this.repositoryRespostas = new RespostasRepository();
     }
 
     async create(req, res) {
@@ -46,7 +47,11 @@ class UsuariosController {
     }
 
     async profile(req, res) {
-        res.json({ user: req.user});
+        const {user} = req;
+        user.respostasDadas = await this.repositoryRespostas.countByEmail(user.email);
+        user.respostasCorretas = await this.repositoryRespostas.countCorretasByEmail(user.email);
+        user.taxaAcerto = (user.respostasCorretas / user.respostasDadas) * 100;
+        res.json(user);
     }
 }
 
